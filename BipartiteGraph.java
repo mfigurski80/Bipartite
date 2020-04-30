@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Stack;
+
 public class BipartiteGraph {
     // to get the edges incident with a vertex v, just call adjacencyMap.get(v)
     private HashMap<Vertex, ArrayList<Edge>> adjacencyMap;
@@ -66,8 +68,67 @@ public class BipartiteGraph {
     }
 
     public ArrayList<Edge> findAugmentingPath(){
-        //insert your implementation here
+        HashMap<Vertex, Boolean> R = new HashMap<Vertex, Boolean>(); // mark left nodes without any match
+        HashMap<Vertex, Boolean> T = new HashMap<Vertex, Boolean>(); // mark right nodes without any match
+
+        // build R, R_vert, T
+        for (Vertex v : rightVertices) T.put(v, true);
+        for (Vertex v : leftVertices) {
+            boolean seenMatch = false;
+            for (Edge e : adjacencyMap.get(v)) {
+                if (e.isInMatching()) {
+                    seenMatch = true;
+                    T.remove(e.getTail());
+                    break;
+                }
+            }
+            if (!seenMatch) {
+                R.put(v, true);
+            }
+        }
+
+        System.out.print("R set: "); System.out.println(R.keySet());
+        System.out.print("T set: "); System.out.println(T.keySet());
+
+
+        for (Vertex v : R.keySet()) {
+            ArrayList<Edge> path = findAugmentingPathFrom(v, T);
+            if (path != null) return path;
+            System.out.println();
+        }
+
         return null;
     }
-    
+
+    private ArrayList<Edge> findAugmentingPathFrom(Vertex start, HashMap<Vertex, Boolean> T) {
+        System.out.println(start);
+
+        for (Edge e : adjacencyMap.get(start)) {
+            System.out.print(e); System.out.println(e.isInMatching());
+            if (e.isInMatching()) continue;
+
+            Vertex right = e.getTail();
+            System.out.println(right);
+            if (T.containsKey(right)) {
+                System.out.println("FOUND!!!!");
+                ArrayList<Edge> path = new ArrayList<Edge>();
+                path.add(e);
+                return path;
+            } else {
+                for (Edge e2 : adjacencyMap.get(right)) {
+                    if (e2.isInMatching()) {
+                        ArrayList<Edge> path = findAugmentingPathFrom(e2.getHead(), T);
+                        path.add(0, e2);
+                        path.add(0, e);
+                        return path;
+                    }
+                }
+            }
+
+        }
+
+        return null;
+    }
+
+
 }
